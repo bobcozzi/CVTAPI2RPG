@@ -1,0 +1,12 @@
+
+      /IF NOT DEFINED(RPGTYPEDEF_SRCF_TEMPL)
+      /DEFINE RPGTYPEDEF_SRCF_TEMPL
+
+      /IF NOT DEFINED(RPGTYPEDEF_CONST)
+        /INCLUDE rpgfree/qcpysrc,RPGT_CONST
+      /ENDIF
+
+         dcl-F QSRCFIN_T DISK(MAX_SRCFILE_LEN)
+                          USAGE(*INPUT) BLOCK(*NO) TEMPLATE;
+
+      /ENDIF
