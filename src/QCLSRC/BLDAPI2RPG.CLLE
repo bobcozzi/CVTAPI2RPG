@@ -1,0 +1,25 @@
+ BLDAPI2RPG: PGM        PARM(&SRCLIB &OBJLIB)
+             DCL        VAR(&SRCLIB) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&OBJLIB) TYPE(*CHAR) LEN(10)
+             MONMSG     MSGID(CPF0000)
+
+             IF      (&OBJLIB = ' ' *OR &OBJLIB = '*SRCLIB') DO
+               CHGVAR     VAR(&OBJLIB) VALUE(&SRCLIB)
+             ENDDO
+
+             CRTRPGMOD  MODULE(&OBJLIB/C2RTD2DS) +
+                          SRCFILE(&SRCLIB/QRPGLESRC) +
+                          DBGVIEW(*SOURCE) OUTPUT(*PRINT) +
+                          REPLACE(*YES) FIXNBR(*ZONED) ALWNULL(*USRCTL)
+
+             CRTRPGMOD  MODULE(&OBJLIB/C2RPARSER) +
+                          SRCFILE(&SRCLIB/QRPGLESRC) +
+                          DBGVIEW(*SOURCE) OUTPUT(*PRINT) +
+                          REPLACE(*YES) FIXNBR(*ZONED) ALWNULL(*USRCTL)
+             CRTPGM     PGM(&OBJLIB/CVTAPI2RPG) MODULE(&OBJLIB/C2*) +
+                          ENTMOD(&OBJLIB/C2RTD2DS) ACTGRP(*NEW) +
+                          REPLACE(*YES)
+             CRTCMD     CMD(&OBJLIB/CVTAPI2RPG) +
+                          PGM(&OBJLIB/CVTAPI2RPG) +
+                          SRCFILE(&SRCLIB/QCMDSRC)
+ ENDPGM:     ENDPGM
