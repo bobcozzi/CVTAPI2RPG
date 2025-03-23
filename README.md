@@ -25,3 +25,7 @@ dcl-ds Qus_SPCA_0100_T  Qualified Inz TEMPLATE;
   Library_Name CHAR(10);                              
 end-ds;  // Qus_SPCA_0100_T</pre>
 
+<h3>Best Practices</h3>
+<p>Since the API return templates in the QSYSINC library for the C and C++ languages are critical, they are always kept up to date. The RPG stuff is kind of a less usable attempt at a similar set of structures.</p><p>Now, the CVTAPI2RPG command can read hose C typedef structures that IBM provides, and translate them to free-format RPG IV that can be used with API calls from within RPG.</p><p>Field names in the typedefs are ported directly to RPG IV so you get the same somewhat descriptive names found in C, but in RPG IV.</p><p>Note that it is often best to just get *ALL typedefs at one for a particular memeber as determining the name for one vs another can be inconsistent and time-consuming. So I recommend that when you need a structure for an API, such as the Retrieve Object Description (QUSROBJD) API, you just get TYPEDEF(*ALL) instead of looking for a specific structure. It is ia future objective to add better search capabilities to the TYPEDEF parameter of the CVTAPI2RPG command. But for now, an exact match is required.</p><p>For example:</p>
+<pre>CVTRPG2API FROMFILE(QSYSINC/H) FROMMBR(QUSROBJD) TOFILE(<yourlib>/QRPGLESRC) TOMBR(QUSROBJD) CRTMBR(*YES) TYPEDEF(Qus_OBJD0100)</pre>
+This retrieves only the typedef for QUSROBJD API format OBJD0100. To get all the OBJD0x00 formats specify TYPEDEF(*ALL).
