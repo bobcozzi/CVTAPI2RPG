@@ -46,4 +46,6 @@ D*                                             Library Name
 </pre>
 <h3>Best Practices</h3>
 <p>The CVTAPI2RPG command can read C typedef structures that IBM provides and translate them to free-format RPG IV that can be used with API calls from within RPG.</p><p>Field names in the typedefs are ported directly from C to RPG IV so you get more descriptive names. When nested data structures are detected, it will insert a LIKEDS in the RPG code and reference the nested structure. Therefore, it may be best to identify the C source member in the H file in QSYSINC and then specify TYPEDEF(*ALL) on the command. That way you get all related structures that the subsequent typedefs may be using. For example, the Retrieve Job Attributes API named QUSRJOBI format JOBI0600 contains the group profile names as an array.</p>
+<h4>What not also convert C prototypes to RPG IV?</h4>
+<p>A common trend among programmers who started coding in the 1990s or later is to omit parameter names in function prototypes. While this practice can reduce clarity and maintainability, (and I consider it lazy) it has become widespread, including in the IBM i QSYSINC System API prototypes. Unfortunately, this pervasiveness makes it impractical to directly convert C prototypes in this context to RPG IV.</p>
 
