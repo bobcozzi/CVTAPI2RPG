@@ -1,25 +1,97 @@
  BLDAPI2RPG: PGM        PARM(&SRCLIB &OBJLIB)
+
+   /* This program builds (creates) the C typedef to RPG IV DS command. */
+   /* You should use the the associated Command to evoke this program:  */
+   /*   BLDAPI2RPG SRCLIB(RPGFREE) OBJLIB(RPGFREE)                      */
+   /* You must first compile "this" program once.                       */
+   /* To compile it use the CRTBNDCL command as follows:                */
+   /*    CRTBNDCL  PGM(RPGFREE/BLDAPI2RPG) SRCFILE(RPGHELPER/QCLSRC)  */
+   /*                SRCMBR(BLDRPGHELP)                                 */
+
              DCL        VAR(&SRCLIB) TYPE(*CHAR) LEN(10)
              DCL        VAR(&OBJLIB) TYPE(*CHAR) LEN(10)
+             DCL        VAR(&CMDNAME) TYPE(*CHAR) LEN(10) VALUE('CVTAPI2RPG')
+             DCL        VAR(&DBGVIEW) TYPE(*CHAR) LEN(8) VALUE(*SOURCE)
+             DCLF       FILE(QAFDMBRL)
              MONMSG     MSGID(CPF0000)
 
              IF      (&OBJLIB = ' ' *OR &OBJLIB = '*SRCLIB') DO
                CHGVAR     VAR(&OBJLIB) VALUE(&SRCLIB)
              ENDDO
 
-             CRTRPGMOD  MODULE(&OBJLIB/C2RTD2DS) +
-                          SRCFILE(&SRCLIB/QRPGLESRC) +
-                          DBGVIEW(*SOURCE) OUTPUT(*PRINT) +
-                          REPLACE(*YES) FIXNBR(*ZONED) ALWNULL(*USRCTL)
+             /* This little trick ends prior PASE runtimes  */
+             /* because I want to avoid the "PASE environment already started */
+             /* nonsense that we often get while compiling. */
+             CALLPRC    PRC('Qp2EndPase')
+             MONMSG     MSGID(CPF0000)
 
-             CRTRPGMOD  MODULE(&OBJLIB/C2RPARSER) +
-                          SRCFILE(&SRCLIB/QRPGLESRC) +
-                          DBGVIEW(*SOURCE) OUTPUT(*PRINT) +
-                          REPLACE(*YES) FIXNBR(*ZONED) ALWNULL(*USRCTL)
-             CRTPGM     PGM(&OBJLIB/CVTAPI2RPG) MODULE(&OBJLIB/C2*) +
-                          ENTMOD(&OBJLIB/C2RTD2DS) ACTGRP(*NEW) +
+          /* First get rid of any "old" C2R *MODULE objects. */
+             DLTOBJ     OBJ(&OBJLIB/C2R*) OBJTYPE(*MODULE) RMVMSG(*YES)
+
+          /* Now build a list of the source members to be compiled  */
+             DSPFD      FILE(&SRCLIB/QRPGLESRC) TYPE(*MBRLIST) +
+                          OUTPUT(*OUTFILE) FILEATR(*PF) +
+                          OUTFILE(QTEMP/RPGFROMC) OUTMBR(*FIRST +
+                          *REPLACE)
+             DSPFD      FILE(&SRCLIB/QCSRC) TYPE(*MBRLIST) +
+                          OUTPUT(*OUTFILE) FILEATR(*PF) +
+                          OUTFILE(QTEMP/RPGFROMC) OUTMBR(*FIRST +
+                          *ADD)
+             OVRDBF     FILE(QAFDMBRL) TOFILE(QTEMP/RPGFROMC) +
+                          LVLCHK(*NO)
+ READNEXT:   RCVF
+             MONMSG     MSGID(CPF0864) EXEC(GOTO CRTRPGPGM)
+              /* Ignore members whose TEST starts with...  */
+             IF (%SST(&MLMTXT 1 4) = 'TEST'  *OR +
+                 %SST(&MLMTXT 1 3) = 'DEV'   *OR +
+                 %SST(&MLMTXT 1 5) = 'INDEV' *OR +
+                 &MLNAME = ' ')  THEN(GOTO READNEXT)
+
+                 /* All source for this command begins with C2R  */
+                 /* except the QCMDSRC command name  */
+             IF (&MLNAME *NE &CMDNAME *AND +
+                 %SST(&MLNAME 1 3) *NE 'C2R') THEN(GOTO READNEXT)
+
+             if (&MLFILE = 'QRPGLESRC') THEN(DO)
+                IF (%SST(&MLSEU2 1 3) = 'SQL') THEN(DO)
+                  CRTSQLRPGI OBJ(&OBJLIB/&MLNAME) SRCFILE(&MLLIB/&MLFILE) +
+                               SRCMBR(&MLNAME) COMMIT(*NONE) +
+                               OBJTYPE(*MODULE) OUTPUT(*PRINT) +
+                               RPGPPOPT(*LVL2) TGTRLS(*CURRENT) +
+                               REPLACE(*YES) DBGVIEW(&DBGVIEW)
+                ENDDO
+                ELSE DO
+                  CRTRPGMOD  MODULE(&OBJLIB/&MLNAME) +
+                               SRCFILE(&MLLIB/&MLFILE) SRCMBR(&MLNAME) +
+                               DBGVIEW(&DBGVIEW) REPLACE(*YES) +
+                               FIXNBR(*ZONED) TGTRLS(*CURRENT) +
+                               ALWNULL(*USRCTL)
+                ENDDO
+             ENDDO
+             if (&MLFILE = 'QCSRC') THEN(DO)
+                IF (%SST(&MLSEU2 1 3) = 'CPP') THEN(DO)
+                  CRTCPPMOD  MODULE(&OBJLIB/&MLNAME) +
+                          SRCFILE(&MLLIB/&MLFILE) SRCMBR(&MLNAME) +
+                          OUTPUT(*PRINT) OPTION(*SHOWUSR) +
+                          DBGVIEW(&DBGVIEW) SYSIFCOPT(*IFS64IO) +
+                          REPLACE(*YES) AUT(*USE) TGTRLS(*CURRENT) +
+                          TERASPACE(*YES)
+                ENDDO
+                IF (%SST(&MLSEU2 1 3) = 'C  ') THEN(DO)
+                  CRTCMOD    MODULE(&OBJLIB/&MLNAME) +
+                          SRCFILE(&MLLIB/&MLFILE) SRCMBR(&MLNAME) +
+                          OUTPUT(*PRINT) DBGVIEW(&DBGVIEW) +
+                          SYSIFCOPT(*IFS64IO) REPLACE(*YES) +
+                          AUT(*USE) TGTRLS(*CURRENT) TERASPACE(*YES)
+                ENDDO
+             ENDDO
+             GOTO  READNEXT
+
+ CRTRPGPGM:
+             CRTPGM     PGM(&OBJLIB/CVTAPI2RPG) MODULE(&OBJLIB/C2R*) +
+                          ENTMOD(&OBJLIB/C2RMAIN) ACTGRP(*NEW) +
                           REPLACE(*YES)
-             CRTCMD     CMD(&OBJLIB/CVTAPI2RPG) +
-                          PGM(&OBJLIB/CVTAPI2RPG) +
-                          SRCFILE(&SRCLIB/QCMDSRC)
+             CRTCMD     CMD(&OBJLIB/&CMDNAME) PGM(&OBJLIB/&CMDNAME) +
+                          SRCFILE(&SRCLIB/QCMDSRC) SRCMBR(&CMDNAME)
+
  ENDPGM:     ENDPGM
