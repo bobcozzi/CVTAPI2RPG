@@ -193,7 +193,8 @@
           // typedefName is returned in lower case.
           typedefName = extractTypedefName(line);
 
-          if (inTypeDef = '*all' or %scan(%lower(typedefName) : inTypeDef) > 0);
+          if (inTypeDef = '*all' or
+              %scan(inTypeDef : %lower(typedefName)) > 0);
             if (typedefName = 'THX1138');  // change to typedef name as needed
               dbg += 1;  // debug here
             endif;
