@@ -27,7 +27,7 @@ dcl-ds Qus_SPCA_0100_T  Qualified Inz TEMPLATE;
 end-ds;  // Qus_SPCA_0100_T</pre>
 <p>Note that User Space attributes (i.e., Qus_SPCA_0100_T) is one of the few typedef/structure names that breaks the format ID number (e.g., 0100) from the format code (e.g., "SPCA"). Virtually all other APIs use formatting names that look like this pattern:  Qxx_FFFFnnnn Where xx is the app ID, FFFF is the identifier/API ID, and nnnn is a 4-digit sequence nunber.</p>
 <h3>Standard RPG IV API Structure</h3>
-<p>Since the structures returned by system APIs in the H file in the QSYSINC library for the C and C++ languages are critical, and are used by IBM own code in some cases, they are always well maintained. Their RPG version can be a little neglected as they still use fixed format, and short 6-char names. In some cases, the legacy "B" datatype is still used.</p><p>Here is what the current RPG IV version of the IBM-supplied QUS_SPCA_0100_T data structure looks like today:</p>
+<p>Since the structures returned by system APIs in the H file in the QSYSINC library for the C and C++ languages are critical, and are used by IBM in some cases, they are always well maintained. Their RPG version can be a little neglected as they still use fixed format, and short 6-char names. In some cases, the legacy "B" datatype is still used. The only exceptions are the IFS prototypes in QRPGLESRC(IFS) IBM actually maintains those very well.</p><p>Here is what the RPG IV version of the IBM-supplied QUS_SPCA_0100_T data structure looks like today:</p>
 <pre>
 DQUSA0100         DS                                                   
 D*                                             Qus SPCA 0100           
