@@ -16,7 +16,7 @@ That QUSRUSAT member in H in QSYSINC contains only one typedef, and that typedef
 } Qus_SPCA_0100_t;</pre>
 
 <p>The CVTAPI2RPG command will read that C code and convert it to the following RPG IV code:</p>
-<pre> // Converted from: <QSYSINC/H/QUSRUSAT>             
+<pre> // Converted from: &lt;QSYSINC/H/QUSRUSAT&gt;             
 dcl-ds Qus_SPCA_0100_T  Qualified Inz TEMPLATE;       
   Bytes_Returned INT(10);                             
   Bytes_Available INT(10);                            
