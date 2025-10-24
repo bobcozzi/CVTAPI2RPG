@@ -25,7 +25,7 @@ dcl-ds Qus_SPCA_0100_T  Qualified Inz TEMPLATE;
   Initial_Value CHAR(1);                              
   Library_Name CHAR(10);                              
 end-ds;  // Qus_SPCA_0100_T</pre>
-<p>Note that User Space attributes (i.e., Qus_SPCA_0100_T) is one of the few typedef/structure names that breaks the format ID number (e.g., 0100) from the format code (e.g., "SPCA"). Virtually all other APIs use formatting names that look like this pattern:  Qxx_FFFFnnnn Where xx is the app ID, FFFF is the identifier/API ID, and nnnn is a 4-digit sequence nunber.</p>
+<p>Note that User Space attributes (i.e., Qus_SPCA_0100_T) is one of the few typedef/structure names that breaks the format ID number (e.g., 0100) from the format code (e.g., "SPCA"). Virtually all other APIs use a name formatting pattern of:  Qxx_FFFFnnnn Where xx is the app ID, FFFF is the identifier/API ID, and nnnn is a 4-digit sequence nunber.</p><p>So this name should be named Qus_SPCA0100_T</p>
 <h3>Standard RPG IV API Structure</h3>
 <p>Since the structures returned by system APIs in the H file in the QSYSINC library for the C and C++ languages are critical, and are used by IBM in some cases, they are always well maintained. Their RPG version can be a little neglected as they still use fixed format, and short 6-char names. In some cases, the legacy "B" datatype is still used. The only exceptions are the IFS prototypes in QRPGLESRC(IFS) IBM actually maintains those very well.</p><p>Here is what the RPG IV version of the IBM-supplied QUS_SPCA_0100_T data structure looks like today:</p>
 <pre>
@@ -44,6 +44,17 @@ D*                                             Initial Value
 D QUSLIBN02              15     24                                     
 D*                                             Library Name                 
 </pre>
+<p>Using this CVTAPI2RPG command, you can create a more viable structure for RPG IV, like this:</p>
+<pre> // Converted from: &lt;QSYSINC/H/QUSRUSAT&gt;             
+dcl-ds Qus_SPCA_0100_T  Qualified Inz TEMPLATE;       
+  Bytes_Returned INT(10);                             
+  Bytes_Available INT(10);                            
+  Space_Size INT(10);                                 
+  Automatic_Extendability CHAR(1);                    
+  Initial_Value CHAR(1);                              
+  Library_Name CHAR(10);                              
+end-ds;  // Qus_SPCA_0100_T</pre>
+
 <h3>Best Practices</h3>
 <p>The CVTAPI2RPG command can read C typedef structures that IBM provides and translate them to free-format RPG IV that can be used with API calls from within RPG.</p><p>Field names in the typedefs are ported directly from C to RPG IV so you get more descriptive names. When nested data structures are detected, it will insert a LIKEDS in the RPG code and reference the nested structure. Therefore, it may be best to identify the C source member in the H file in QSYSINC and then specify TYPEDEF(*ALL) on the command. That way you get all related structures that the subsequent typedefs may be using. For example, the Retrieve Job Attributes API named QUSRJOBI format JOBI0600 contains the group profile names as an array.</p>
 <h4>Why not also convert C prototypes to RPG IV?</h4>
