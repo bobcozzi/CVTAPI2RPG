@@ -1,4 +1,4 @@
-**FREE
+**free
         ctl-opt OPTION(*NODEBUGIO: *SRCSTMT) FIXNBR(*ZONED)
                 COPYRIGHT('(c) 2025 by R. Cozzi, Jr. All rights reserved.')
                 MAIN(MAIN);
@@ -108,7 +108,7 @@
           dcl-s line varchar(MAX_SRCLINE_LEN);
           dcl-s fieldName varchar(128);
           dcl-s fieldType varchar(128);
-          dcl-s fieldSize  int(5);
+          dcl-s fieldSize varchar(64);
           dcl-s fieldDec   int(5);
           dcl-s blanks10 char(10) inz(' ');
           dcl-s blanks12 char(12) inz(' ');
@@ -403,7 +403,7 @@ end-proc;
 dcl-proc extractFieldName;
   dcl-pi extractFieldName varchar(128) rtnparm;
     line  varchar(MAX_SRCLINE_LEN) const;
-    fieldLen int(5);
+    fieldLen varchar(64);
     fieldDec int(5);
   end-pi;
 
@@ -413,7 +413,7 @@ dcl-proc extractFieldName;
   dcl-s strPos int(5);
   dcl-s endPos int(5);
 
-  fieldLen = 0;
+  fieldLen = '';
   fieldDec = 0;
 
 
@@ -449,18 +449,18 @@ dcl-proc extractFieldName;
     endPos = %scan(']' : fieldName); // Find the end of array size
     fieldSize = %SUBST(fieldName : strPos + 1 : endPos - strPos - 1); // Extract array size
     if (%scan(',' : fieldSize) > 0);
-      fieldLen = %int(%trim(%SUBST(fieldSize: 1: %scan(',' : fieldSize) - 1))); // Extract length
+      fieldLen = %trim(%SUBST(fieldSize: 1: %scan(',' : fieldSize) - 1)); // Extract length
       fieldDec = %int(%trim(%SUBST(fieldSize: %scan(',' : fieldSize) + 1))); // Extract decimal
     else;
-      fieldLen = %int(%trim(fieldSize));
-      fieldDec = -1;
+       fieldLen = fieldSize;
     endif;
+      fieldDec = -1;
   endif;
 
   return %SUBST(fieldName : 1 : strPos - 1);
 end-proc;
 
-dcl-proc processStruct;
+  dcl-proc processStruct;
     dcl-pi processStruct;
       typedefName varchar(128) const;
     end-pi;
@@ -494,15 +494,18 @@ dcl-proc processStruct;
             else;
               // Process each struct member line
               fieldType = extractFieldType(line); // Custom procedure to get field type
-              fieldName = extractFieldName(line : fieldsize : fieldDec); // Get Field Name/Size
+              fieldName = extractFieldName(line : fieldSize : fieldDec); // Get Field Name/Size
+
               if (%scan('CHAR' : fieldType) > 0);  // If CHAR, then set the field length
-                if (fieldSize <= 0);
-                  fieldSize = 1;
+                if (fieldSize = '');
+                  fieldSize = '1';
                 endif;
-                fieldType = %ScanRPL('?' : %char(fieldSize) : fieldType);
-              elseif (fieldSize > 0);
-                fieldType += ' DIM(' + %char(fieldSize) + ')';
+                // BOB: Figure out why you're doing this ScanRpl. (trigraphs, maybe?)
+                fieldType = %ScanRPL('?' : fieldSize : fieldType);
+              elseif (fieldSize <> '');
+                fieldType += ' DIM(' + fieldSize + ')';
               endif;
+
               if (outSRCRCD.srcSeq = 0);  // First record?
                 SETLL *END QSRCFOUT;
                 readP qsrcfout outSRCRCD;
